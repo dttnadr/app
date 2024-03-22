@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kasir App</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+    }
+    .container{
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+    #input-form {
+        margin-right: 20px;
+    }
+
+    #payment-form {
+        margin-left: 20px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    input, select {
+        margin-bottom: 10px;
+        padding: 5px;
+        width: auto;
+        border: none;
+        border-bottom: 1px solid black;
+    }
+    
+    input, text{
+      border: none;
+    }
+
+    button {
+        padding: 5px 10px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: #0056b3;
+    }
+
+    .card {
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 10px;
+        margin: 20px;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
+        flex: 1;
+        max-width: 300px;
+    }
+
+    .card-header {
+        background-color: #007bff;
+        color: #fff;
+        padding: 5px 10px;
+        border-radius: 5px 5px 0 0;
+    }
+
+    .card-body {
+        padding: 10px;
+    }
+
+    .total {
+        font-weight: bold;
+    }
+    
+    .total-1{
+      font-size: 20px;
+      background-color: rgba(114,255,38,0.989);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    
+    .tbl{
+      border: 1px solid black;
+      width: 100%;
+    }
+    
+    h1{
+      text-align: center;
+    }
+</style>
+</head>
+<body>
+<h1><b>Aplikasi Kasir</b></h1>
+<div class="container">
+ <div id="input-form" class="card">
+    <div>
+        <label for="itemName">Nama Barang:</label>
+        <select id="itemName">
+            <option value="NaN"></option>
+            <option value="Pensil">Pensil</option>
+            <option value="Pulpen">Pulpen</option>
+            <option value="Penghapus">Penghapus</option>
+            <option value="Buku">Buku</option>
+        </select>
+    </div>
+    <div>
+        <label for="itemPrice">Harga (Rp):</label>
+        Rp<input type="text" id="itemPrice" readonly>
+    </div>
+    <div>
+        <button onclick="addItem()">Beli</button>
+    </div>
+</div>
+<div id="payment-form" class="card">
+    <div class="card-header">Invoice</div>
+    <div class="card-body" id="invoiceContent">
+        <p>Tidak ada barang dalam keranjang.</p>
+    </div>
+    <div>
+      <button onclick="resetData()">Reset</button>
+    </div>
+</div> 
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if(localStorage.getItem('items')) {
+            renderInvoice();
+        }
+    });
+
+    function addItem() {
+        var itemName = document.getElementById('itemName').value;
+        var itemPrice = parseFloat(document.getElementById('itemPrice').value);
+
+        if (itemName && itemPrice) {
+            var item = {
+                name: itemName,
+                price: itemPrice
+            };
+
+            var items = localStorage.getItem('items') ? JSON.parse(localStorage.getItem('items')) : [];
+            items.push(item);
+            localStorage.setItem('items', JSON.stringify(items));
+
+            renderInvoice();
+
+            document.getElementById('itemName').selectedIndex = 0;
+            document.getElementById('itemPrice').value = '';
+        } else {
+            alert('Nama barang dan harga harus diisi.');
+        }
+    }
+
+    function renderInvoice() {
+        var items = JSON.parse(localStorage.getItem('items'));
+        var invoiceHTML = '';
+        var total = 0;
+
+        if (items && items.length > 0) {
+            invoiceHTML += '<table class="tbl" border="2px"><tr><th>Nama Barang</th><th>Harga</th></tr>';
+
+            items.forEach(function(item) {
+                invoiceHTML += '<tr><td>' + item.name + '</td><td>Rp ' + item.price.toFixed(2) + '</td></tr>';
+                total += item.price;
+            });
+
+            invoiceHTML += '</table>';
+
+            var discount = total > 50000 ? total * 0.1 : 0;
+            var totalAfterDiscount = total - discount;
+
+            invoiceHTML += '<p class="total">Total: Rp ' + total.toFixed(2) + '</p>';
+            invoiceHTML += '<p>Diskon: Rp ' + discount.toFixed(2) + ' (10%) </p>';
+            invoiceHTML += '<p class="total-1">Total: Rp ' + totalAfterDiscount.toFixed(2) + '</p>';
+        } else {
+            invoiceHTML += '<p>Tidak ada barang dalam keranjang.</p>';
+        }
+
+        document.getElementById('invoiceContent').innerHTML = invoiceHTML;
+    }
+
+    // Mengatur harga otomatis berdasarkan pilihan barang
+    document.getElementById('itemName').addEventListener('change', function() {
+        var itemName = this.value;
+        var itemPrice;
+
+        switch(itemName) {
+            case 'NaN':
+                itemPrice = 0;
+                break;
+            case 'Pensil':
+                itemPrice = 2000;
+                break;
+            case 'Pulpen':
+                itemPrice = 4000;
+                break;
+            case 'Penghapus':
+                itemPrice = 1000;
+                break;
+            case 'Buku':
+                itemPrice = 5000;
+                break;
+            default:
+                itemPrice = 0;
+        }
+
+        document.getElementById('itemPrice').value = itemPrice.toFixed(2);
+    });
+
+    function resetData() {
+        localStorage.removeItem('items');
+        renderInvoice();
+    }
+    document.getElementById('paymentAmount').addEventListener('input', function() {
+        var paymentAmount = parseFloat(this.value);
+        var totalAmount = parseFloat(document.querySelector('.total').textContent.split(': ')[1]);
+        var changeAmount = paymentAmount - totalAmount;
+        if (isNaN(changeAmount) || changeAmount < 0) {
+            changeAmount = 0;
+        }
+        document.getElementById('changeAmount').value = changeAmount.toFixed(2);
+    });
+</script>
+</body>
+</html>
